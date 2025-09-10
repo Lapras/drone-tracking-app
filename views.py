@@ -63,10 +63,13 @@ def home(): # Remember that def means defining a function, i.e. home
 # request, store it in a variable, then push it to a screen like the other drones
 @views.route("/drone/<call_sign>")
 def drone_page(call_sign):
+    print("doing something")
     callsigns = database.get_callsigns()
     if call_sign not in callsigns:
+        print("no callsign")
         return render_template("404.html"), 404  # Or redirect to home if preferred
 
+    print("call callsign")
     #drones = sorted(ALLOWED_CALLSIGNS)  # Optional: for dropdown
     return render_template("droneJ.html", call_sign=call_sign, drones=callsigns)
 
@@ -90,49 +93,74 @@ def get_data():
 
 def post_data(request):
     client_key = request.headers.get("X-API-KEY")
-        if client_key != API_KEY:
-            return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
+    if client_key != API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-        data_json = request.get_json()
-        if not latest_json:
-            return jsonify({"error": "No JSON data received"}), 400
+    data_json = request.get_json()
+    if not data_json:
+        return jsonify({"error": "No JSON data received"}), 400
 
-        call_sign = data_json.get("call_sign")
-        lat = data_json.get("position", {}).get("latitude")
-        lon = data_json.get("position", {}).get("longitude")
-        deviation = 0
+    call_sign = data_json.get("call_sign")
+    callsigns = database.get_callsigns()
+    if(call_sign not in callsigns):
+        return jsonify({"error": "Incorrect callsign"}, 400)
+    
+    pos_data = data_json.get("position", {})
+    lat = pos_data.get("latitude")
+    lon = pos_data.get("longitude")
+    alt = pos_data.get("altitude", 0.0)
+    flightDeviation = database.get_cum_deviation_for_callsign(call_sign)
 
-        # Compute deviation from path
-        if call_sign in path_lines and lat is not None and lon is not None:
-            pt = Point(lon, lat)
-            line = path_lines[call_sign]
-            nearest = line.interpolate(line.project(pt))
-            dist_m = pt.distance(nearest) * 111000
-            dist_ft = dist_m * 3.28084
-            deviation = round(dist_ft, 2)
+    flight = database.get_callsign_flight(call_sign)
 
-            # Accumulate deviation sum over 25 ft
-            if deviation > 25:
-                cumulative_dev_sum_map[call_sign] += (deviation - 25)
-            latest_json["cumulative_dev_sum"] = round(cumulative_dev_sum_map[call_sign], 2)
+    # Compute deviation from path
+    if call_sign in path_lines and lat is not None and lon is not None:
+        pt = Point(lon, lat)
+        line = path_lines[call_sign]
+        nearest = line.interpolate(line.project(pt))
+        dist_m = pt.distance(nearest) * 111000
+        dist_ft = dist_m * 3.28084
+        deviation = round(dist_ft, 2)
 
-        if call_sign:
-            history_by_callsign.setdefault(call_sign, []).append(latest_json)
+        # Accumulate deviation sum over 25 ft
+        if deviation > 25:
+            flightDeviation += (deviation - 25)
+            
+        flightDeviation = round(deviation, 2)
+    position = Position(latitude=lat, longitude=long, altitude=alt)
 
-        return jsonify({"message": "JSON received and deviation calculated"}), 200
+    database.add_track(flight, position)
 
-# #Gets data for each callsign at /data/callsign
-# #will give error if no callsign at page
+    database.commit_session()
 
-# @views.route("/data/<call_sign>", methods=["GET"])
-# def data_by_callsign(call_sign):
-#     global history_by_callsign
+    return jsonify({"message": "JSON received and deviation calculated"}), 200
 
-#     data_list = history_by_callsign.get(call_sign)
-#     if data_list is None:
-#         return jsonify({"error": "No data found for this call_sign"}), 404
+#Gets data for each callsign at /data/callsign
+#will give error if no callsign at page
 
-#     return jsonify(data_list)
+@views.route("/data/<call_sign>", methods=["GET"])
+def data_by_callsign(call_sign):
+    flight = database.get_callsign_flight(call_sign)
+
+    sorted_tracks = sorted(flight.tracks, key=lambda t: t.timestamp)
+
+    data_list = []
+    for track in sorted_tracks:
+        position = track.position
+        data_list.append({
+            "timestamp": track.timestamp.isoformat(),
+            "position": {
+                "latitude": position.latitude,
+                "longitude": position.longitude,
+                "altitude": position.altitude,
+            },
+            "velocity_airpseed": track.velocity_airpseed,
+            "velocity_groundSpeed": track.velocity_groundSpeed,
+            "velocity_vertSpeed": track.velocity_vertSpeed,
+            "velocity_unitsSpeed": track.velocity_unitsSpeed,
+        })
+
+    return jsonify(data_list), 200
 
 # #clear history button
 # @views.route("/reset_history", methods=["POST"])

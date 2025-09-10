@@ -70,11 +70,6 @@ def drone_page(call_sign):
     #drones = sorted(ALLOWED_CALLSIGNS)  # Optional: for dropdown
     return render_template("droneJ.html", call_sign=call_sign, drones=callsigns)
 
-# @views.route("/droneJ")
-# def droneJ():
-#     #global latest_json
-#     return render_template("droneJ.html")#, data=latest_json)
-
 # #-----BACKEND PAGES-------------------------------------------------------------------------------------------------------------------#
 
 # # This will take in JSON data and then post it on the /data page
@@ -140,6 +135,5 @@ def drone_page(call_sign):
 #     cumulative_dev_sum_map.clear()
 #     latest_json.clear()
 #     return redirect(url_for("views.home"))
-
 
 # #------------------------------------------------------------------------------------------------------------------------------------#

@@ -20,6 +20,15 @@ class Callsign(Base):
     callsign = Column(String, unique=True, nullable=False)
     airframe = Column(String, nullable=False)
 
+
+flight_paths = {
+    "DUSKY27":       "Disaster_City_Survey_V2_converted.xlsx",
+    "DUSKY18":     "RELLIS_NORTH_-_REL→Hearne_converted.xlsx",
+    "DUSKY24":  "RELLIS_SOUTH_-_REL_→_AggieFarm_converted.xlsx",
+    "DUSKY21":    "RELLIS_WEST_-_REL_→_Caldwell_converted.xlsx"
+}
+
+
 # Set up the SQLite database engine
 engine = create_engine('sqlite:///instance/drone_app.db', echo=True)
 
@@ -32,10 +41,10 @@ session = Session()
 
 # Create the 4 callsign entries
 callsigns = [
-    Callsign(callsign="Alpha1", airframe="Drone A1"),
-    Callsign(callsign="Bravo2", airframe="Drone B2"),
-    Callsign(callsign="Charlie3", airframe="Drone C3"),
-    Callsign(callsign="Delta4", airframe="Drone D4")
+    Callsign(callsign="DUSKY27", airframe="NA"),
+    Callsign(callsign="DUSKY28", airframe="NA"),
+    Callsign(callsign="DUSKY24", airframe="NA"),
+    Callsign(callsign="DUSKY21", airframe="NA")
 ]
 
 # Add the callsigns to the session

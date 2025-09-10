@@ -33,6 +33,8 @@ class Flight(db.Model):
 
     tracks: Mapped[List["Track"]] = relationship(back_populates="flights")
 
+    tracks: Mapped[["CumulativeDeviation"] = relationship(back_populates="flights"), uselist=False]
+
 class Track(db.Model):
     __tablename__ = "tracks"
 
@@ -83,3 +85,11 @@ class FlightPlan(db.Model):
 def get_callsigns():
     callsigns = db.session.execute(db.select(Callsign.callsign)).scalars().all()
     return callsigns
+
+class CumulativeDeviation(db.Model):
+    __tablename__ = "cumulativedeviations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    flight_id = mapped_column(ForeignKey("callsigns.id"))
+    flight = relationship(Callsign, back_populates="flights")

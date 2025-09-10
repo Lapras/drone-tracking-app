@@ -72,47 +72,54 @@ def drone_page(call_sign):
 
 # #-----BACKEND PAGES-------------------------------------------------------------------------------------------------------------------#
 
-# # This will take in JSON data and then post it on the /data page
-# # Use the testFile.py file to see if the site can get a JSON POST request
-# # Define your secret key securely in production
-# #API_KEY = "your-secret-api-key"  
-# @views.route("/data", methods=["GET", "POST"])
-# def get_data():
-#     if request.method == "POST":
-#         client_key = request.headers.get("X-API-KEY")
-#         if client_key != API_KEY:
-#             return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
+# This will take in JSON data and then post it on the /data page
+# Use the testFile.py file to see if the site can get a JSON POST request
+# Define your secret key securely in production
+#API_KEY = "your-secret-api-key"  
+@views.route("/data", methods=["GET", "POST"])
+def data_route():
+    if request.method == "POST":
+        return post_data(request)
+    elif request.method == "GET":
+        return get_data()
 
-#         latest_json = request.get_json()
-#         if not latest_json:
-#             return jsonify({"error": "No JSON data received"}), 400
+    
 
-#         call_sign = latest_json.get("call_sign")
-#         lat = latest_json.get("position", {}).get("latitude")
-#         lon = latest_json.get("position", {}).get("longitude")
+def get_data():
+    return render_template("displayJSON.html", data=latest_json, drones=ALLOWED_CALLSIGNS)
 
-#         # Compute deviation from path
-#         if call_sign in path_lines and lat is not None and lon is not None:
-#             pt = Point(lon, lat)
-#             line = path_lines[call_sign]
-#             nearest = line.interpolate(line.project(pt))
-#             dist_m = pt.distance(nearest) * 111000
-#             dist_ft = dist_m * 3.28084
-#             deviation = round(dist_ft, 2)
-#             latest_json["deviation"] = deviation
+def post_data(request):
+    client_key = request.headers.get("X-API-KEY")
+        if client_key != API_KEY:
+            return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-#             # Accumulate deviation sum over 25 ft
-#             if deviation > 25:
-#                 cumulative_dev_sum_map[call_sign] += (deviation - 25)
-#             latest_json["cumulative_dev_sum"] = round(cumulative_dev_sum_map[call_sign], 2)
+        data_json = request.get_json()
+        if not latest_json:
+            return jsonify({"error": "No JSON data received"}), 400
 
-#         if call_sign:
-#             history_by_callsign.setdefault(call_sign, []).append(latest_json)
+        call_sign = data_json.get("call_sign")
+        lat = data_json.get("position", {}).get("latitude")
+        lon = data_json.get("position", {}).get("longitude")
+        deviation = 0
 
-#         return jsonify({"message": "JSON received and deviation calculated"}), 200
+        # Compute deviation from path
+        if call_sign in path_lines and lat is not None and lon is not None:
+            pt = Point(lon, lat)
+            line = path_lines[call_sign]
+            nearest = line.interpolate(line.project(pt))
+            dist_m = pt.distance(nearest) * 111000
+            dist_ft = dist_m * 3.28084
+            deviation = round(dist_ft, 2)
 
-#     return render_template("displayJSON.html", data=latest_json, drones=ALLOWED_CALLSIGNS)
+            # Accumulate deviation sum over 25 ft
+            if deviation > 25:
+                cumulative_dev_sum_map[call_sign] += (deviation - 25)
+            latest_json["cumulative_dev_sum"] = round(cumulative_dev_sum_map[call_sign], 2)
 
+        if call_sign:
+            history_by_callsign.setdefault(call_sign, []).append(latest_json)
+
+        return jsonify({"message": "JSON received and deviation calculated"}), 200
 
 # #Gets data for each callsign at /data/callsign
 # #will give error if no callsign at page

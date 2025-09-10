@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
 
 from typing import List
-import datetime
+from datetime import datetime, timezone
 
 class Base(DeclarativeBase):
     pass
@@ -59,7 +59,7 @@ class Track(db.Model):
     velocity_vertSpeed: Mapped[float]
     velocity_unitsSpeed: Mapped[str]
 
-    timestamp = Mapped[datetime]
+    timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
 
 class Position(db.Model):
     __tablename__ = "positions"
@@ -111,9 +111,9 @@ def get_cum_deviation_for_callsign(callsign_str):
 def add_track(flight, position):
     db.session.add(position)
 
-    track = track(
+    track = Track(
         flight_id=flight.id,
-        posiion_id = position.id
+        position_id = position.id
     )
 
     db.session.add(track)

@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
+from sqlalchemy import Integer, text
 from sqlalchemy import Integer
 from sqlalchemy import create_engine, inspect, Table, MetaData, text
 from sqlalchemy import Column
@@ -11,6 +12,7 @@ from sqlalchemy.orm import relationship
 
 
 from typing import List
+from datetime import datetime, timezone
 import datetime
 
 import os, re
@@ -27,19 +29,29 @@ class Callsign(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     callsign: Mapped[str] = mapped_column(unique=True)
     airframe: Mapped[str]
-    flights: Mapped[List["Flight"]] = relationship(back_populates="callsigns")
+    flights: Mapped[List["Flight"]] = relationship(back_populates="callsign")
+
+
+class CumulativeDeviation(db.Model):
+    __tablename__ = "cumulativedeviations"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=0.0)
+
+    flight_id = mapped_column(ForeignKey("flights.id"))
 
 class Flight(db.Model):
     __tablename__ = "flights"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)
-    start_time = Mapped[datetime]
+    name: Mapped[str] = mapped_column()
+    # start_time = Mapped[datetime]
 
     callsign_id = mapped_column(ForeignKey("callsigns.id"))
     callsign = relationship(Callsign, back_populates="flights")
 
-    tracks: Mapped[List["Track"]] = relationship(back_populates="flights")
+    tracks: Mapped[List["Track"]] = relationship(back_populates="flight")
+
+    deviation: Mapped["CumulativeDeviation"] = relationship("CumulativeDeviation", uselist=False)
 
 class Track(db.Model):
     __tablename__ = "tracks"
@@ -50,14 +62,14 @@ class Track(db.Model):
     flight = relationship("Flight", back_populates="tracks")
 
     position_id = mapped_column(ForeignKey("positions.id"))
-    position: Mapped["Position"] = relationship(back_populates=("positions"), uselist=False)
+    position: Mapped["Position"] = relationship("Position", uselist=False)
 
     velocity_airpseed: Mapped[float]
     velocity_groundSpeed: Mapped[float]
     velocity_vertSpeed: Mapped[float]
     velocity_unitsSpeed: Mapped[str]
 
-    timestamp = Mapped[datetime]
+    timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
 
 class Position(db.Model):
     __tablename__ = "positions"
@@ -68,15 +80,15 @@ class Position(db.Model):
     longitude: Mapped[float]
     altitude: Mapped[float]
 
+
 class ExpectedPosition(db.Model):
     __tablename__ = "expectedpositions"
     id: Mapped[int] = mapped_column(primary_key=True)
 
     position_id = mapped_column(ForeignKey("positions.id"))
-    poisition: Mapped["Position"] = relationship(back_populates=("positions"), uselist=False)
+    poisition: Mapped["Position"] = relationship("Position", uselist=False)
 
     flight_id = mapped_column(ForeignKey("flightplans.id"))
-    flight_plan = relationship("FlightPlan", back_populates="expectedpositions")
 
     order: Mapped[int]
 
@@ -85,12 +97,41 @@ class FlightPlan(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    expected_positions: Mapped[List["ExpectedPosition"]] = relationship(back_populates="flightplans")
+    expected_positions: Mapped[List["ExpectedPosition"]] = relationship("ExpectedPosition")
 
+def create_all():
+    db.create_all()
 
 def get_callsigns():
+    result = db.session.execute(text("SELECT callsign FROM callsigns")).fetchall()
+    print(result)
     callsigns = db.session.execute(db.select(Callsign.callsign)).scalars().all()
     return callsigns
+
+def get_callsign_flight(callsign_str):
+    callsign = db.session.query(Callsign).filter_by(callsign=callsign_str).first()
+    if callsign:
+        return callsign.flights[0]
+
+def get_cum_deviation_for_callsign(callsign_str):
+    callsign = db.session.query(Callsign).filter_by(callsign=callsign_str).first()
+    if callsign:
+        return callsign.flights[0].deviation
+
+def add_track(flight, position):
+    db.session.add(position)
+
+    track = Track(
+        flight_id=flight.id,
+        position_id = position.id
+    )
+
+    db.session.add(track)
+    db.session.commit()
+
+
+def commit_session():
+    db.session.commit()
 
 def excel_to_db(
     excel_name: str | None = None,

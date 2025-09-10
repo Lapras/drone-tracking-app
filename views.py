@@ -63,69 +63,104 @@ def home(): # Remember that def means defining a function, i.e. home
 # request, store it in a variable, then push it to a screen like the other drones
 @views.route("/drone/<call_sign>")
 def drone_page(call_sign):
+    print("doing something")
     callsigns = database.get_callsigns()
     if call_sign not in callsigns:
+        print("no callsign")
         return render_template("404.html"), 404  # Or redirect to home if preferred
 
+    print("call callsign")
     #drones = sorted(ALLOWED_CALLSIGNS)  # Optional: for dropdown
     return render_template("droneJ.html", call_sign=call_sign, drones=callsigns)
 
 # #-----BACKEND PAGES-------------------------------------------------------------------------------------------------------------------#
 
-# # This will take in JSON data and then post it on the /data page
-# # Use the testFile.py file to see if the site can get a JSON POST request
-# # Define your secret key securely in production
-# #API_KEY = "your-secret-api-key"  
-# @views.route("/data", methods=["GET", "POST"])
-# def get_data():
-#     if request.method == "POST":
-#         client_key = request.headers.get("X-API-KEY")
-#         if client_key != API_KEY:
-#             return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
+# This will take in JSON data and then post it on the /data page
+# Use the testFile.py file to see if the site can get a JSON POST request
+# Define your secret key securely in production
+#API_KEY = "your-secret-api-key"  
+@views.route("/data", methods=["GET", "POST"])
+def data_route():
+    if request.method == "POST":
+        return post_data(request)
+    elif request.method == "GET":
+        return get_data()
 
-#         latest_json = request.get_json()
-#         if not latest_json:
-#             return jsonify({"error": "No JSON data received"}), 400
+    
 
-#         call_sign = latest_json.get("call_sign")
-#         lat = latest_json.get("position", {}).get("latitude")
-#         lon = latest_json.get("position", {}).get("longitude")
+def get_data():
+    return render_template("displayJSON.html", data=latest_json, drones=ALLOWED_CALLSIGNS)
 
-#         # Compute deviation from path
-#         if call_sign in path_lines and lat is not None and lon is not None:
-#             pt = Point(lon, lat)
-#             line = path_lines[call_sign]
-#             nearest = line.interpolate(line.project(pt))
-#             dist_m = pt.distance(nearest) * 111000
-#             dist_ft = dist_m * 3.28084
-#             deviation = round(dist_ft, 2)
-#             latest_json["deviation"] = deviation
+def post_data(request):
+    client_key = request.headers.get("X-API-KEY")
+    if client_key != API_KEY:
+        return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
 
-#             # Accumulate deviation sum over 25 ft
-#             if deviation > 25:
-#                 cumulative_dev_sum_map[call_sign] += (deviation - 25)
-#             latest_json["cumulative_dev_sum"] = round(cumulative_dev_sum_map[call_sign], 2)
+    data_json = request.get_json()
+    if not data_json:
+        return jsonify({"error": "No JSON data received"}), 400
 
-#         if call_sign:
-#             history_by_callsign.setdefault(call_sign, []).append(latest_json)
+    call_sign = data_json.get("call_sign")
+    callsigns = database.get_callsigns()
+    if(call_sign not in callsigns):
+        return jsonify({"error": "Incorrect callsign"}, 400)
+    
+    pos_data = data_json.get("position", {})
+    lat = pos_data.get("latitude")
+    lon = pos_data.get("longitude")
+    alt = pos_data.get("altitude", 0.0)
+    flightDeviation = database.get_cum_deviation_for_callsign(call_sign)
 
-#         return jsonify({"message": "JSON received and deviation calculated"}), 200
+    flight = database.get_callsign_flight(call_sign)
 
-#     return render_template("displayJSON.html", data=latest_json, drones=ALLOWED_CALLSIGNS)
+    # Compute deviation from path
+    if call_sign in path_lines and lat is not None and lon is not None:
+        pt = Point(lon, lat)
+        line = path_lines[call_sign]
+        nearest = line.interpolate(line.project(pt))
+        dist_m = pt.distance(nearest) * 111000
+        dist_ft = dist_m * 3.28084
+        deviation = round(dist_ft, 2)
 
+        # Accumulate deviation sum over 25 ft
+        if deviation > 25:
+            flightDeviation += (deviation - 25)
+            
+        flightDeviation = round(deviation, 2)
+    position = Position(latitude=lat, longitude=long, altitude=alt)
 
-# #Gets data for each callsign at /data/callsign
-# #will give error if no callsign at page
+    database.add_track(flight, position)
 
-# @views.route("/data/<call_sign>", methods=["GET"])
-# def data_by_callsign(call_sign):
-#     global history_by_callsign
+    database.commit_session()
 
-#     data_list = history_by_callsign.get(call_sign)
-#     if data_list is None:
-#         return jsonify({"error": "No data found for this call_sign"}), 404
+    return jsonify({"message": "JSON received and deviation calculated"}), 200
 
-#     return jsonify(data_list)
+#Gets data for each callsign at /data/callsign
+#will give error if no callsign at page
+
+@views.route("/data/<call_sign>", methods=["GET"])
+def data_by_callsign(call_sign):
+    flight = database.get_callsign_flight(call_sign)
+
+    sorted_tracks = sorted(flight.tracks, key=lambda t: t.timestamp)
+
+    data_list = []
+    for track in sorted_tracks:
+        position = track.position
+        data_list.append({
+            "timestamp": track.timestamp.isoformat(),
+            "position": {
+                "latitude": position.latitude,
+                "longitude": position.longitude,
+                "altitude": position.altitude,
+            },
+            "velocity_airpseed": track.velocity_airpseed,
+            "velocity_groundSpeed": track.velocity_groundSpeed,
+            "velocity_vertSpeed": track.velocity_vertSpeed,
+            "velocity_unitsSpeed": track.velocity_unitsSpeed,
+        })
+
+    return jsonify(data_list), 200
 
 # #clear history button
 # @views.route("/reset_history", methods=["POST"])

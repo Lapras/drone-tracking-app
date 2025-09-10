@@ -1,4 +1,5 @@
-from database import db, Callsign
+from database import db, Callsign, Flight
+from app import app  # Import your Flask app
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -10,16 +11,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Define the base class for declarative models
-Base = declarative_base()
-
-# Define the Callsign model
-class Callsign(Base):
-    __tablename__ = 'callsign'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    callsign = Column(String, unique=True, nullable=False)
-    airframe = Column(String, nullable=False)
-
 
 flight_paths = {
     "DUSKY27":       "Disaster_City_Survey_V2_converted.xlsx",
@@ -30,31 +21,36 @@ flight_paths = {
 
 
 # Set up the SQLite database engine
-engine = create_engine('sqlite:///instance/drone_app.db', echo=True)
+with app.app_context():
+    db.create_all()
 
-# Create the tables in the database (if they don't already exist)
-Base.metadata.create_all(engine)
+    flight27 = Flight(name="Flight1")
+    flight28 = Flight(name="Flight1")
+    flight24 = Flight(name="Flight1")
+    flight21 = Flight(name="Flight1")
 
-# Create a session
-Session = sessionmaker(bind=engine)
-session = Session()
+    # Create the 4 callsign entries
+    callsigns_to_add = [
+        Callsign(callsign="DUSKY27", airframe="NA", flights=[flight27]),
+        Callsign(callsign="DUSKY28", airframe="NA", flights=[flight28]),
+        Callsign(callsign="DUSKY24", airframe="NA", flights=[flight24]),
+        Callsign(callsign="DUSKY21", airframe="NA", flights=[flight21])
+    ]
 
-# Create the 4 callsign entries
-callsigns = [
-    Callsign(callsign="DUSKY27", airframe="NA"),
-    Callsign(callsign="DUSKY28", airframe="NA"),
-    Callsign(callsign="DUSKY24", airframe="NA"),
-    Callsign(callsign="DUSKY21", airframe="NA")
-]
+    for cs in callsigns_to_add:
+        existing = db.session.query(Callsign).filter_by(callsign=cs.callsign).first()
+        if not existing:
+            db.session.add(cs)
+        else:
+            print(f"Callsign {cs.callsign} already exists, skipping...")
 
-# Add the callsigns to the session
-session.add_all(callsigns)
 
-# Commit the session to the database
-session.commit()
 
-# Confirm insertion
-print("4 Callsign entries have been added.")
+    # Commit the session to the database
+    db.session.commit()
 
-# Close the session
-session.close()
+    # Confirm insertion
+    print("4 Callsign entries have been added.")
+
+    # Close the session
+    db.session.close()

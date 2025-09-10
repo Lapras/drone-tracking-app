@@ -2,7 +2,7 @@
 
 # Initializes/creates our flask app, must be done anytime you make one
 from flask import Flask
-from db import db
+from database import db
 
 
 

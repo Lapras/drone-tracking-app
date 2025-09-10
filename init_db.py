@@ -1,4 +1,4 @@
-from db import db, Callsign
+from database import db, Callsign
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,7 +21,7 @@ class Callsign(Base):
     airframe = Column(String, nullable=False)
 
 # Set up the SQLite database engine
-engine = create_engine('sqlite:///drone_app.db', echo=True)
+engine = create_engine('sqlite:///instance/drone_app.db', echo=True)
 
 # Create the tables in the database (if they don't already exist)
 Base.metadata.create_all(engine)

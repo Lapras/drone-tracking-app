@@ -15,7 +15,7 @@ from shapely.geometry import LineString, Point
 
 from dotenv import load_dotenv
 
-from db import *
+import database
 
 # Load environment variables from .env file
 load_dotenv()
@@ -54,22 +54,21 @@ views = Blueprint(__name__, "views") # Init/create the Blueprint and call it vie
 def home(): # Remember that def means defining a function, i.e. home
     # Renders our index.html file in the templates folder for the home page
     # You can put as many var.'s in the return as you want, they can be gotten from the webpage from there
-    callsigns = Callsign.query.all()
-    callsigns = Callsign.query.all()
-    return render_template("index.html", drones=sorted([callsigns]))
+    callsigns = database.get_callsigns()
+    print(callsigns)
+    return render_template("index.html", drones=sorted(callsigns))
 
 #-----DRONE TAKING JSON INPUT------------------------------------------------------------------------------------------------------#
 # This will be drone J for JSON, it will take in user inputted json through a curl
 # request, store it in a variable, then push it to a screen like the other drones
 @views.route("/drone/<call_sign>")
 def drone_page(call_sign):
-    callsigns = Callsign.query.all()
-    if call_sign not in available_callsigns:
+    callsigns = database.get_callsigns()
+    if call_sign not in callsigns:
         return render_template("404.html"), 404  # Or redirect to home if preferred
 
     #drones = sorted(ALLOWED_CALLSIGNS)  # Optional: for dropdown
-    return render_template("droneJ.html", call_sign=call_sign, drones=available_callsigns)
-
+    return render_template("droneJ.html", call_sign=call_sign, drones=callsigns)
 
 # @views.route("/droneJ")
 # def droneJ():

@@ -174,16 +174,16 @@
 <part>id</part>
 </key>
 </table>
-<table x="1057" y="37" name="Cumulative Deviations">
+<table x="1422" y="56" name="Cumulative Deviations">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="deviation" null="1" autoincrement="0">
 <datatype>DECIMAL</datatype>
 <default>NULL</default></row>
-<row name="id_Callsigns" null="1" autoincrement="0">
+<row name="id_Flights" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
-<default>NULL</default><relation table="Callsigns" row="id" />
+<default>NULL</default><relation table="Flights" row="id" />
 </row>
 <key type="PRIMARY" name="">
 <part>id</part>

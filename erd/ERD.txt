@@ -37,7 +37,7 @@
 		<type label="SET" length="1" sql="SET" quote=""/>
 		<type label="Bit" length="0" sql="bit" quote=""/>
 	</group>
-</datatypes><table x="863" y="296" name="Callsigns">
+</datatypes><table x="1022" y="194" name="Callsigns">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -51,21 +51,9 @@
 <part>id</part>
 </key>
 </table>
-<table x="1487" y="215" name="Tracks">
+<table x="1401" y="201" name="Tracks">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="velocity_airspeed" null="1" autoincrement="0">
-<datatype>DECIMAL</datatype>
-<default>NULL</default></row>
-<row name="velocity_groundSpeed" null="1" autoincrement="0">
-<datatype>DECIMAL</datatype>
-<default>NULL</default></row>
-<row name="velocity_vertSpeed" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="velocity_unitsSpeed" null="1" autoincrement="0">
-<datatype>MEDIUMTEXT</datatype>
 <default>NULL</default></row>
 <row name="track" null="1" autoincrement="0">
 <datatype>DECIMAL</datatype>
@@ -100,6 +88,10 @@
 <row name="callsign" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default></row>
+<row name="id_velocities" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="velocities" row="id" />
+</row>
 <row name="id_Positions" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Positions" row="id" />
@@ -108,7 +100,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1185" y="227" name="Flights">
+<table x="1186" y="147" name="Flights">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -130,15 +122,18 @@
 <part>id</part>
 </key>
 </table>
-<table x="817" y="720" name="Flight Plans">
+<table x="1201" y="599" name="Flight Plans">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="Name" null="1" autoincrement="0">
+<datatype>MEDIUMTEXT</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="1723" y="737" name="Positions">
+<table x="1649" y="500" name="Positions">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -155,7 +150,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1180" y="729" name="Expected Position">
+<table x="1402" y="601" name="Expected Position">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -174,17 +169,40 @@
 <part>id</part>
 </key>
 </table>
-<table x="1422" y="56" name="Cumulative Deviations">
+<table x="1400" y="24" name="Cumulative Deviations">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
-<row name="deviation" null="1" autoincrement="0">
+<row name="recent" null="1" autoincrement="0">
+<datatype>DECIMAL</datatype>
+<default>NULL</default></row>
+<row name="cumulative" null="1" autoincrement="0">
 <datatype>DECIMAL</datatype>
 <default>NULL</default></row>
 <row name="id_Flights" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Flights" row="id" />
 </row>
+<key type="PRIMARY" name="">
+<part>id</part>
+</key>
+</table>
+<table x="1651" y="299" name="velocities">
+<row name="id" null="1" autoincrement="1">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="airspeed" null="1" autoincrement="0">
+<datatype>DECIMAL</datatype>
+<default>NULL</default></row>
+<row name="ground_speed" null="1" autoincrement="0">
+<datatype>DECIMAL</datatype>
+<default>NULL</default></row>
+<row name="vertical_speed" null="1" autoincrement="0">
+<datatype>DECIMAL</datatype>
+<default>NULL</default></row>
+<row name="units_speed" null="1" autoincrement="0">
+<datatype>MEDIUMTEXT</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>

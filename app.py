@@ -1,13 +1,16 @@
 # Based on this video: https://www.youtube.com/watch?v=kng-mJJby8g
 
 # Initializes/creates our flask app, must be done anytime you make one
+import os
 from flask import Flask
 from database import db
+from dotenv import load_dotenv
 
-
+load_dotenv()
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///drone_app.db"
+app.config["API_KEY"] = os.getenv("API_KEY")
 
 db.init_app(app)
 #imports views from our views file, these are our web pages

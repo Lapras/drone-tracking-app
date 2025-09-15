@@ -16,11 +16,16 @@ Usage:
 import time
 import random
 import requests
+import os
 from datetime import datetime, timezone
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
 ENDPOINT_URL = "http://localhost:8000/data"
-API_KEY = "TESTKEY"
+API_KEY = os.getenv("API_KEY")
 
 # List of the four drones
 DRONES = [

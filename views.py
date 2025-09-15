@@ -89,7 +89,7 @@ def get_data():
 
 def post_data(request):
     client_key = request.headers.get("X-API-KEY")
-    if client_key != API_KEY:
+    if client_key != current_app.config["API_KEY"]:
         return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
     data_json = request.get_json()
     if not data_json:

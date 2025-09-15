@@ -154,6 +154,7 @@ def cycle_flights():
         callsign.flights.append(new_flight)
     
     db.session.commit()
+    
 def excel_to_db(
     excel_name: str | None = None,
     db_dest: str = "instance/drone_app.db",

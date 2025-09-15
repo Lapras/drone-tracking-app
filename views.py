@@ -20,31 +20,31 @@ import database
 # Load environment variables from .env file
 load_dotenv()
 # Get the API key from the environment
-API_KEY = os.getenv("API_KEY")
+API_KEY = "TESTKEY"
 
 
 views = Blueprint(__name__, "views") # Init/create the Blueprint and call it views
 
 # # ——— FLIGHT PATH CONFIG ———
-# FLIGHT_XLSX_DIR = "/Users/avery.austin/Desktop/IPG/CROW/DroneTracker/json_data"
+FLIGHT_XLSX_DIR = "./flight_path_data"
 
-# flight_paths = {
-#     "DUSKY27":       "Disaster_City_Survey_V2_converted.xlsx",
-#     "DUSKY18":     "RELLIS_NORTH_-_REL→Hearne_converted.xlsx",
-#     "DUSKY24":  "RELLIS_SOUTH_-_REL_→_AggieFarm_converted.xlsx",
-#     "DUSKY21":    "RELLIS_WEST_-_REL_→_Caldwell_converted.xlsx"
-# }
+flight_paths = {
+    "DUSKY27":       "Disaster_City.xlsx",
+    "DUSKY18":     "Rellis_North.xlsx",
+    "DUSKY24":  "Rellis_South.xlsx",
+    "DUSKY21":    "Rellis_West.xlsx"
+}
 
 # Preload LineStrings for each flight path
-# path_lines = {}
-# for name, xlsx in flight_paths.items():
-#     full_path = os.path.join(FLIGHT_XLSX_DIR, xlsx)
-#     df = (pd.read_excel(full_path, sheet_name="in")
-#             [["Latitude", "Longitude", "Altitude"]]
-#             .dropna()
-#             .reset_index(drop=True))
-#     coords = list(zip(df["Longitude"], df["Latitude"]))
-#     path_lines[name] = LineString(coords)
+path_lines = {}
+for name, xlsx in flight_paths.items():
+    full_path = os.path.join(FLIGHT_XLSX_DIR, xlsx)
+    df = (pd.read_excel(full_path, sheet_name="in")
+            [["Latitude", "Longitude", "Altitude"]]
+            .dropna()
+            .reset_index(drop=True))
+    coords = list(zip(df["Longitude"], df["Latitude"]))
+    path_lines[name] = LineString(coords)
 
 
 
@@ -55,7 +55,6 @@ def home(): # Remember that def means defining a function, i.e. home
     # Renders our index.html file in the templates folder for the home page
     # You can put as many var.'s in the return as you want, they can be gotten from the webpage from there
     callsigns = database.get_callsigns()
-    print(callsigns)
     return render_template("index.html", drones=sorted(callsigns))
 
 #-----DRONE TAKING JSON INPUT------------------------------------------------------------------------------------------------------#
@@ -63,13 +62,10 @@ def home(): # Remember that def means defining a function, i.e. home
 # request, store it in a variable, then push it to a screen like the other drones
 @views.route("/drone/<call_sign>")
 def drone_page(call_sign):
-    print("doing something")
     callsigns = database.get_callsigns()
     if call_sign not in callsigns:
-        print("no callsign")
         return render_template("404.html"), 404  # Or redirect to home if preferred
 
-    print("call callsign")
     #drones = sorted(ALLOWED_CALLSIGNS)  # Optional: for dropdown
     return render_template("droneJ.html", call_sign=call_sign, drones=callsigns)
 
@@ -95,15 +91,13 @@ def post_data(request):
     client_key = request.headers.get("X-API-KEY")
     if client_key != API_KEY:
         return jsonify({"error": "Unauthorized: Invalid API Key"}), 401
-
     data_json = request.get_json()
     if not data_json:
         return jsonify({"error": "No JSON data received"}), 400
-
     call_sign = data_json.get("call_sign")
     callsigns = database.get_callsigns()
     if(call_sign not in callsigns):
-        return jsonify({"error": "Incorrect callsign"}, 400)
+        return jsonify({"error": "Incorrect callsign"}), 400
     
     pos_data = data_json.get("position", {})
     lat = pos_data.get("latitude")
@@ -127,7 +121,7 @@ def post_data(request):
             flightDeviation += (deviation - 25)
             
         flightDeviation = round(deviation, 2)
-    position = Position(latitude=lat, longitude=long, altitude=alt)
+    position = database.Position(latitude=lat, longitude=lon, altitude=alt)
 
     database.add_track(flight, position)
 
@@ -154,7 +148,7 @@ def data_by_callsign(call_sign):
                 "longitude": position.longitude,
                 "altitude": position.altitude,
             },
-            "velocity_airpseed": track.velocity_airpseed,
+            "velocity_aiispeed": track.velocity_airspeed,
             "velocity_groundSpeed": track.velocity_groundSpeed,
             "velocity_vertSpeed": track.velocity_vertSpeed,
             "velocity_unitsSpeed": track.velocity_unitsSpeed,

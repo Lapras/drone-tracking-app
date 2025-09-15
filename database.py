@@ -13,7 +13,6 @@ from sqlalchemy.orm import relationship
 
 from typing import List
 from datetime import datetime, timezone
-import datetime
 
 import os, re
 import pandas as pd
@@ -43,7 +42,8 @@ class Callsign(db.Model):
 class CumulativeDeviation(db.Model):
     __tablename__ = "cumulativedeviations"
 
-    id: Mapped[int] = mapped_column(primary_key=True, default=0.0)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    amount: Mapped[float] = mapped_column(default=0.0)
 
     flight_id = mapped_column(ForeignKey("flights.id"))
 
@@ -61,6 +61,10 @@ class Flight(db.Model):
 
     deviation: Mapped["CumulativeDeviation"] = relationship("CumulativeDeviation", uselist=False)
 
+    def __init__(self, name):
+        self.name = name
+        self.deviation = CumulativeDeviation()
+
 class Track(db.Model):
     __tablename__ = "tracks"
 
@@ -72,10 +76,10 @@ class Track(db.Model):
     position_id = mapped_column(ForeignKey("positions.id"))
     position: Mapped["Position"] = relationship("Position", uselist=False)
 
-    velocity_airpseed: Mapped[float]
-    velocity_groundSpeed: Mapped[float]
-    velocity_vertSpeed: Mapped[float]
-    velocity_unitsSpeed: Mapped[str]
+    velocity_airspeed: Mapped[float] = mapped_column(default=0.0)
+    velocity_groundSpeed: Mapped[float] = mapped_column(default=0.0)
+    velocity_vertSpeed: Mapped[float] = mapped_column(default=0.0)
+    velocity_unitsSpeed: Mapped[str] = mapped_column(default=0.0)
 
     timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
 
@@ -112,7 +116,6 @@ def create_all():
 
 def get_callsigns():
     result = db.session.execute(text("SELECT callsign FROM callsigns")).fetchall()
-    print(result)
     callsigns = db.session.execute(db.select(Callsign.callsign)).scalars().all()
     return callsigns
 
@@ -124,13 +127,14 @@ def get_callsign_flight(callsign_str):
 def get_cum_deviation_for_callsign(callsign_str):
     callsign = db.session.query(Callsign).filter_by(callsign=callsign_str).first()
     if callsign:
-        return callsign.get_current_flight()
+        return callsign.get_current_flight().deviation.amount
+
 def add_track(flight, position):
     db.session.add(position)
 
     track = Track(
         flight_id=flight.id,
-        position_id = position.id
+        position = position
     )
 
     db.session.add(track)
@@ -154,7 +158,7 @@ def cycle_flights():
         callsign.flights.append(new_flight)
     
     db.session.commit()
-    
+
 def excel_to_db(
     excel_name: str | None = None,
     db_dest: str = "instance/drone_app.db",

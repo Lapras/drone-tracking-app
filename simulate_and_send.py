@@ -19,15 +19,15 @@ import requests
 from datetime import datetime, timezone
 
 # Configuration
-ENDPOINT_URL = "https://ashtonrwsmith.pythonanywhere.com/data"
-API_KEY = "your-secret-api-key"
+ENDPOINT_URL = "http://localhost:8000/data"
+API_KEY = "TESTKEY"
 
 # List of the four drones
 DRONES = [
-    "Disaster_City_Survey",
-    "RELLIS_South_to_AggieFarm",
-    "RELLIS_West_to_Caldwell",
-    "RELLIS_North_to_Hearne"
+    "DUSKY21",
+    "DUSKY27",
+    "DUSKY28",
+    "DUSKY24"
 ]
 
 #geographic bounding box for random positions (example: around College Station, TX)
@@ -83,11 +83,8 @@ def main():
         for call_sign in DRONES:
             pkt = generate_random_packet(call_sign)
             send_packet(pkt)
-            time.sleep(0.25)  # stagger 4 updates evenly within each second
+            # time.sleep(0.25)  # stagger 4 updates evenly within each second
         # Ensure roughly 1-second intervals between each 4-drone batch
-        elapsed = time.time() - start
-        if elapsed < 1.0:
-            time.sleep(1.0 - elapsed)
 
 if __name__ == "__main__":
     main()

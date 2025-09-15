@@ -39,11 +39,13 @@ class Callsign(db.Model):
         return next((f for f in self.flights if f.name == "currentflight"), None)
 
 
-class CumulativeDeviation(db.Model):
-    __tablename__ = "cumulativedeviations"
+class Deviation(db.Model):
+    __tablename__ = "deviations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    amount: Mapped[float] = mapped_column(default=0.0, nullable=False)
+    cumulative: Mapped[float] = mapped_column(default=0.0)
+    recent: Mapped[float]  = mapped_column(default=0.0)
+
 
     flight_id = mapped_column(ForeignKey("flights.id"), nullable=False)
 
@@ -59,11 +61,11 @@ class Flight(db.Model):
 
     tracks: Mapped[List["Track"]] = relationship(back_populates="flight")
 
-    deviation: Mapped["CumulativeDeviation"] = relationship("CumulativeDeviation", uselist=False)
+    deviation: Mapped["Deviation"] = relationship("Deviation", uselist=False)
 
     def __init__(self, name):
         self.name = name
-        self.deviation = CumulativeDeviation()
+        self.deviation = Deviation()
 
 class Track(db.Model):
     __tablename__ = "tracks"

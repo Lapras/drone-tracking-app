@@ -58,7 +58,7 @@ def generate_random_packet(call_sign):
             "altitude": round(altitude, 2)
         },
         "velocity": {
-             "airspeed": round(random.uniform(0, 50), 2),
+            "airspeed": round(random.uniform(0, 50), 2),
             "ground_speed": round(random.uniform(0, 50), 2),
             "vertical_speed": round(random.uniform(-10, 10), 2),
             "units_speed": "MetersPerSecond",

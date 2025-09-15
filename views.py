@@ -105,9 +105,9 @@ def post_data(request):
     lon = pos_data.get("longitude")
     alt = pos_data.get("altitude", 0.0)
 
-    flightDeviation = database.get_cum_deviation_for_callsign(call_sign)
-
     flight = database.get_callsign_flight(call_sign)
+
+    flightDeviation = flight.deviation
 
     # Compute deviation from path
     if call_sign in path_lines and lat is not None and lon is not None:
@@ -120,12 +120,11 @@ def post_data(request):
 
         # Accumulate deviation sum over 25 ft
         if deviation > 25:
-            flightDeviation += (deviation - 25)
+            flightDeviation.cumulative += (deviation - 25)
             
-        flightDeviation = round(deviation, 2)
+        flightDeviation.recent = round(deviation, 2)
     position = database.Position(latitude=lat, longitude=lon, altitude=alt)
-    # Yes, i know verticle is a typo, but it's in the json_data folder so im abding by it for now
-    velocity = database.Velocity(airspeed = velocity_data.get(""), ground_speed = velocity_data.get(""), vertical_speed = velocity_data.get("verticle_speed"), units_speed = velocity_data.get("units_speed"))
+    velocity = database.Velocity(airspeed = velocity_data.get("airspeed"), ground_speed = velocity_data.get("ground_speed"), vertical_speed = velocity_data.get("vertical_speed"), units_speed = velocity_data.get("units_speed"))
 
     database.add_track(flight, position, velocity)
 
@@ -146,18 +145,21 @@ def data_by_callsign(call_sign):
     for track in sorted_tracks:
         position = track.position
         data_list.append({
-            "timestamp": track.timestamp.isoformat(),
+            "time_measured": track.timestamp.isoformat(),
             "position": {
                 "latitude": position.latitude,
                 "longitude": position.longitude,
                 "altitude": position.altitude,
             },
-            "velocity_airspeed": track.velocity.airspeed,
-            "velocity_groundSpeed": track.velocity.ground_speed,
-            "velocity_vertSpeed": track.velocity.vertical_speed,
-            "velocity_unitsSpeed": track.velocity.units_speed,
+            "velocity": {
+                "airspeed": track.velocity.airspeed,
+                "groundSpeed": track.velocity.ground_speed,
+                "vertSpeed": track.velocity.vertical_speed,
+                "unitsSpeed": track.velocity.units_speed,
+            },
+            "deviation": flight.deviation.recent,
+            "cumulative_dev_sum": flight.deviation.cumulative
         })
-
     return jsonify(data_list), 200
 
 #clear history button

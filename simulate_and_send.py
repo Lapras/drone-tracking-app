@@ -58,9 +58,21 @@ def generate_random_packet(call_sign):
             "altitude": round(altitude, 2)
         },
         "velocity": {
-            "airspeed": round(airspeed, 2)
+             "airspeed": round(random.uniform(0, 50), 2),
+            "ground_speed": round(random.uniform(0, 50), 2),
+            "vertical_speed": round(random.uniform(-10, 10), 2),
+            "units_speed": "MetersPerSecond",
+            "track": round(random.uniform(0, 360), 2)
         },
-        "time_measured": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        "time_measured": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        # "orientation": {
+        #     "pitch": round(random.uniform(-30, 30), 2),
+        #     "roll": round(random.uniform(-30, 30), 2),
+        #     "yaw": round(random.uniform(0, 360), 2),
+        #     "pitch_rate": round(random.uniform(-5, 5), 2),
+        #     "roll_rate": round(random.uniform(-5, 5), 2),
+        #     "yaw_rate": round(random.uniform(-5, 5), 2)
+        # }
     }
     return packet
 

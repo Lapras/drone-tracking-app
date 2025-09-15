@@ -100,9 +100,11 @@ def post_data(request):
         return jsonify({"error": "Incorrect callsign"}), 400
     
     pos_data = data_json.get("position", {})
+    velocity_data = data_json.get("velocity", {})
     lat = pos_data.get("latitude")
     lon = pos_data.get("longitude")
     alt = pos_data.get("altitude", 0.0)
+
     flightDeviation = database.get_cum_deviation_for_callsign(call_sign)
 
     flight = database.get_callsign_flight(call_sign)
@@ -122,8 +124,10 @@ def post_data(request):
             
         flightDeviation = round(deviation, 2)
     position = database.Position(latitude=lat, longitude=lon, altitude=alt)
+    # Yes, i know verticle is a typo, but it's in the json_data folder so im abding by it for now
+    velocity = database.Velocity(airspeed = velocity_data.get(""), ground_speed = velocity_data.get(""), vertical_speed = velocity_data.get("verticle_speed"), units_speed = velocity_data.get("units_speed"))
 
-    database.add_track(flight, position)
+    database.add_track(flight, position, velocity)
 
     database.commit_session()
 
@@ -148,10 +152,10 @@ def data_by_callsign(call_sign):
                 "longitude": position.longitude,
                 "altitude": position.altitude,
             },
-            "velocity_aiispeed": track.velocity_airspeed,
-            "velocity_groundSpeed": track.velocity_groundSpeed,
-            "velocity_vertSpeed": track.velocity_vertSpeed,
-            "velocity_unitsSpeed": track.velocity_unitsSpeed,
+            "velocity_airspeed": track.velocity.airspeed,
+            "velocity_groundSpeed": track.velocity.ground_speed,
+            "velocity_vertSpeed": track.velocity.vertical_speed,
+            "velocity_unitsSpeed": track.velocity.units_speed,
         })
 
     return jsonify(data_list), 200

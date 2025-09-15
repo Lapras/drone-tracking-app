@@ -26,7 +26,7 @@ db = SQLAlchemy(model_class=Base)
 class Callsign(db.Model):
     __tablename__ = "callsigns"
     id: Mapped[int] = mapped_column(primary_key=True)
-    callsign: Mapped[str] = mapped_column(unique=True)
+    callsign: Mapped[str] = mapped_column(unique=True, nullable=False)
     airframe: Mapped[str]
     flights: Mapped[List["Flight"]] = relationship(back_populates="callsign")
 
@@ -43,9 +43,9 @@ class CumulativeDeviation(db.Model):
     __tablename__ = "cumulativedeviations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    amount: Mapped[float] = mapped_column(default=0.0)
+    amount: Mapped[float] = mapped_column(default=0.0, nullable=False)
 
-    flight_id = mapped_column(ForeignKey("flights.id"))
+    flight_id = mapped_column(ForeignKey("flights.id"), nullable=False)
 
 class Flight(db.Model):
     __tablename__ = "flights"
@@ -54,7 +54,7 @@ class Flight(db.Model):
     name: Mapped[str] = mapped_column()
     # start_time = Mapped[datetime]
 
-    callsign_id = mapped_column(ForeignKey("callsigns.id"))
+    callsign_id = mapped_column(ForeignKey("callsigns.id"), nullable=False)
     callsign = relationship(Callsign, back_populates="flights")
 
     tracks: Mapped[List["Track"]] = relationship(back_populates="flight")
@@ -70,39 +70,47 @@ class Track(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    flight_id = mapped_column(ForeignKey("flights.id"))
+    flight_id = mapped_column(ForeignKey("flights.id"), nullable=False)
     flight = relationship("Flight", back_populates="tracks")
 
-    position_id = mapped_column(ForeignKey("positions.id"))
+    position_id = mapped_column(ForeignKey("positions.id"), nullable=False)
     position: Mapped["Position"] = relationship("Position", uselist=False)
 
-    velocity_airspeed: Mapped[float] = mapped_column(default=0.0)
-    velocity_groundSpeed: Mapped[float] = mapped_column(default=0.0)
-    velocity_vertSpeed: Mapped[float] = mapped_column(default=0.0)
-    velocity_unitsSpeed: Mapped[str] = mapped_column(default=0.0)
+    velocity_id = mapped_column(ForeignKey("velocities.id"), nullable=False)
+    velocity: Mapped["Velocity"] = relationship("Velocity", uselist=False)
 
-    timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc), nullable=False)
 
 class Position(db.Model):
     __tablename__ = "positions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    latitude: Mapped[float]
-    longitude: Mapped[float]
-    altitude: Mapped[float]
+    latitude: Mapped[float] = mapped_column(default=0.0)
+    longitude: Mapped[float]    = mapped_column(default=0.0)
+    altitude: Mapped[float] = mapped_column(default=0.0)
+
+class Velocity(db.Model):
+    __tablename__ = "velocities"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    airspeed: Mapped[float] = mapped_column(default=0.0)
+    ground_speed: Mapped[float] = mapped_column(default=0.0)
+    vertical_speed: Mapped[float] = mapped_column(default=0.0)
+    units_speed: Mapped[str] = mapped_column(default="MetersPerSecond")
 
 
 class ExpectedPosition(db.Model):
     __tablename__ = "expectedpositions"
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    position_id = mapped_column(ForeignKey("positions.id"))
+    position_id = mapped_column(ForeignKey("positions.id"), nullable=False)
     poisition: Mapped["Position"] = relationship("Position", uselist=False)
 
     flight_id = mapped_column(ForeignKey("flightplans.id"))
 
-    order: Mapped[int]
+    order: Mapped[int] = mapped_column(nullable=False)
 
 class FlightPlan(db.Model):
     __tablename__ = "flightplans"
@@ -129,12 +137,14 @@ def get_cum_deviation_for_callsign(callsign_str):
     if callsign:
         return callsign.get_current_flight().deviation.amount
 
-def add_track(flight, position):
+def add_track(flight, position, velocity):
     db.session.add(position)
+    db.session.add(velocity)
 
     track = Track(
         flight_id=flight.id,
-        position = position
+        position = position, 
+        velocity = velocity
     )
 
     db.session.add(track)

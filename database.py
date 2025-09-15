@@ -21,6 +21,14 @@ class Callsign(db.Model):
     airframe: Mapped[str]
     flights: Mapped[List["Flight"]] = relationship(back_populates="callsign")
 
+    def __init__(self, callsign : str, airframe : str):
+        self.callsign = callsign
+        self.airframe = airframe
+        self.flights = [Flight(name="currentflight")]
+
+    def get_current_flight(self):
+        return next((f for f in self.flights if f.name == "currentflight"), None)
+
 
 class CumulativeDeviation(db.Model):
     __tablename__ = "cumulativedeviations"
@@ -101,13 +109,12 @@ def get_callsigns():
 def get_callsign_flight(callsign_str):
     callsign = db.session.query(Callsign).filter_by(callsign=callsign_str).first()
     if callsign:
-        return callsign.flights[0]
+        return callsign.get_current_flight()
 
 def get_cum_deviation_for_callsign(callsign_str):
     callsign = db.session.query(Callsign).filter_by(callsign=callsign_str).first()
     if callsign:
-        return callsign.flights[0].deviation
-
+        return callsign.get_current_flight()
 def add_track(flight, position):
     db.session.add(position)
 
@@ -121,4 +128,19 @@ def add_track(flight, position):
 
 
 def commit_session():
+    db.session.commit()
+
+def cycle_flights():
+    callsigns = db.session.query(Callsign).all()
+
+    for callsign in callsigns:
+        current = callsign.get_current_flight()
+        
+        if current:
+            existing_flights = len(callsign.flights)
+            current.name = f"flight{existing_flights}"
+
+        new_flight = Flight(name="currentflight")
+        callsign.flights.append(new_flight)
+    
     db.session.commit()

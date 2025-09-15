@@ -1,3 +1,11 @@
+import os
+
+db_path = "instance/drone_app.db"
+
+if os.path.exists(db_path):
+    os.remove(db_path)
+    print(f"Deleting existing databse file: {db_path}")
+
 from database import db, Callsign, Flight
 from app import app  # Import your Flask app
 
@@ -24,17 +32,13 @@ flight_paths = {
 with app.app_context():
     db.create_all()
 
-    flight27 = Flight(name="Flight1")
-    flight28 = Flight(name="Flight1")
-    flight24 = Flight(name="Flight1")
-    flight21 = Flight(name="Flight1")
 
     # Create the 4 callsign entries
     callsigns_to_add = [
-        Callsign(callsign="DUSKY27", airframe="NA", flights=[flight27]),
-        Callsign(callsign="DUSKY28", airframe="NA", flights=[flight28]),
-        Callsign(callsign="DUSKY24", airframe="NA", flights=[flight24]),
-        Callsign(callsign="DUSKY21", airframe="NA", flights=[flight21])
+        Callsign(callsign="DUSKY27", airframe="NA"),
+        Callsign(callsign="DUSKY28", airframe="NA"),
+        Callsign(callsign="DUSKY24", airframe="NA"),
+        Callsign(callsign="DUSKY21", airframe="NA")
     ]
 
     for cs in callsigns_to_add:

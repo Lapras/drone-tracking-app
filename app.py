@@ -11,6 +11,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///drone_app.db"
 app.config["API_KEY"] = os.getenv("API_KEY")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 db.init_app(app)
 #imports views from our views file, these are our web pages

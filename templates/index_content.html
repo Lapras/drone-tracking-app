@@ -1,0 +1,46 @@
+{% block content %}
+  <h1 style="text-align: center;">BCDC Drone Tracker</h1>
+
+  <!-- Two side-by-side maps -->
+  <div class="splitmap-container">
+    <div id="map-all" class="map-box"></div>
+    <div class="map-box-stack">
+      <div id="map-single" class="map-box"></div>
+      <div id="zoomed-drone-label" class="zoom-label">Zoomed drone: —</div>
+    </div>
+  </div>
+
+  <!-- Drone data summary boxes -->
+  <div id="drone-data-container" class="drone-data-container"></div>
+
+  <!-- Homepage Graphs -->
+  <h2 style="text-align:center;">Airspeed &amp; Altitude</h2>
+  <div id="homepage-graphs" style="display: flex; flex-wrap: wrap; justify-content: space-around;">
+    {% for drone in drones %}
+      <div class="graph-box" style="width:45%; margin:20px; position:relative;">
+        <h3>Drone {{ drone }}</h3>
+        <div class="counter-box"
+             style="position:absolute; top:10px; right:10px;
+                    background:rgba(255,255,255,0.8);
+                    padding:6px; border-radius:5px; text-align:right;">
+          <p style="margin:0;font-size:14px;">
+            Airspeed: <span id="ctr-{{ drone }}-airspeed">--</span> kt
+          </p>
+          <p style="margin:0;font-size:14px;">
+            Altitude: <span id="ctr-{{ drone }}-altitude">--</span> ft
+          </p>
+        </div>
+        <div id="graph-home-{{ drone }}" style="height:300px;"></div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Expose drone list globally -->
+  <script>
+    window.droneCallSigns = JSON.parse('{{ drones | tojson | safe }}');
+  </script>
+
+  <!-- Include JS logic from external files -->
+  <script type="module" src="{{ url_for('static', filename='js/splitmap.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/homepage_graphs.js') }}"></script>
+{% endblock %}

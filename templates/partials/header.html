@@ -1,0 +1,33 @@
+<div class="header">
+  <div class="nav-title">
+    <img src="{{ url_for('static', filename='images/BCDC_LOGO.svg') }}" alt="BCDC Logo" class="header-logo" />
+  </div>
+  <div class="nav-menu">
+    <button onclick="location.href='/'">Home</button>
+    <div class="dropdown">
+      <button class="dropbtn">Drones ▾</button>
+      <div class="dropdown-content">
+        {% for drone in drones %}
+          <a href="{{ url_for('views.drone_page', call_sign=drone) }}">Drone {{ drone }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    <button onclick="document.getElementById('confirmModal').style.display='block'">
+      Delete History
+    </button>
+  </div>
+
+  <!-- Modal dialog -->
+  <div id="confirmModal" style="display:none; position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+       background: white; border: 1px solid #aaa; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 999;">
+    <p>Are you sure you want to delete all drone history?</p>
+    <button onclick="confirmReset()" style="margin-right: 10px;">Yes</button>
+    <button onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+  </div>
+  <script>
+    function confirmReset() {
+      fetch('/reset_history', { method: 'POST' })
+        .then(() => location.reload());
+    }
+  </script>
+</div>

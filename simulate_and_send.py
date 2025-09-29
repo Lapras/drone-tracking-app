@@ -41,6 +41,12 @@ LON_CENTER = -96.3344
 LAT_SPAN = 0.02  # ~1.2 miles
 LON_SPAN = 0.02  # ~1.2 miles
 
+session = requests.Session()
+headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": API_KEY
+}
+
 def generate_random_packet(call_sign):
     """
     generate random telemetry packet for given call_sign
@@ -80,23 +86,18 @@ def send_packet(packet):
     """
     Send a single telemetry packet to the endpoint.
     """
-    headers = {
-        "Content-Type": "application/json",
-        "X-API-KEY": API_KEY
-    }
     try:
-        resp = requests.post(ENDPOINT_URL, json=packet, headers=headers, timeout=5)
+        resp = session.post(ENDPOINT_URL, json=packet, headers=headers, timeout=5)
         if resp.status_code == 200:
             print(f"[{packet['call_sign']}] Sent at {packet['time_measured']}")
         else:
             print(f"[ERROR {resp.status_code}] {resp.text}")
-    except requests.RequestException as e:
+    except session.RequestException as e:
         print(f"[EXCEPTION] Failed to send {packet['call_sign']}: {e}")
 
 def main():
     print("Starting telemetry simulation. Press Ctrl+C to stop.")
     while True:
-        start = time.time()
         for call_sign in DRONES:
             pkt = generate_random_packet(call_sign)
             send_packet(pkt)

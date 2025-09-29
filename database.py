@@ -171,6 +171,18 @@ def cycle_flights():
     
     db.session.commit()
 
+def get_new_tracks(flight, last_request_time):
+    new_tracks = (
+    db.session.query(Track)
+    .filter(Track.flight_id == flight.id)
+    .filter(Track.timestamp > last_request_time)
+    .order_by(Track.timestamp)
+    .all()
+    )
+
+    return new_tracks
+
+
 def excel_to_db(
     excel_name: str | None = None,
     db_dest: str = "instance/drone_app.db",

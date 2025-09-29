@@ -11,6 +11,7 @@
 - [ ] Optimize Javascript inside the HTML/js files
   - [ ] Don't request the full dataset, timestamp requests and only get NEW data
     - [ ] use plotly.extendtraces and don't constantly query the API
+    - [ ] Sessionize and query based on a time
   - [ ] Don't request one drone at a time, instead have a singular endpoint to get all drone data
 - [ ] Basic CRUD for drones, flights, and expected fligh paths
 - [ ] Flight Save / Playback feature
